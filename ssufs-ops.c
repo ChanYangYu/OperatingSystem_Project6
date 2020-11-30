@@ -1,5 +1,4 @@
 #include "ssufs-ops.h"
-#define DEBUG 1
 
 extern struct filehandle_t file_handle_array[MAX_OPEN_FILES];
 
@@ -18,22 +17,11 @@ int ssufs_create(char *filename){
 	char buffer[BLOCKSIZE];
 	struct inode_t new_inode;
 
-	if(open_namei(filename) != -1){
-#if DEBUG
-	fprintf(stderr,"File is already exist!\n");
-#endif
+	if(open_namei(filename) != -1)
 		return -1;
-	}
-	if((inode_num = ssufs_allocInode()) == -1){
-#if DEBUG
-	fprintf(stderr,"The number of file is full\n");
-#endif
+	if((inode_num = ssufs_allocInode()) == -1)
 		return -1;
-	}
 	if((block_num = ssufs_allocDataBlock()) == -1){
-#if DEBUG
-	fprintf(stderr,"There is No FreeBlock\n");
-#endif
 		ssufs_freeInode(inode_num);
 		return -1;
 	}
@@ -59,12 +47,8 @@ void ssufs_delete(char *filename){
 	char buffer[BLOCKSIZE];
 	struct inode_t info;
 
-	if((inode_num = open_namei(filename)) == -1){
-#if DEBUG
-	fprintf(stderr,"The file is not exist\n");
-#endif
+	if((inode_num = open_namei(filename)) == -1)
 		return;
-	}
 	ssufs_readInode(inode_num, &info);
 	memset(buffer, 0, sizeof(buffer));
 	//data clear
@@ -78,12 +62,8 @@ void ssufs_delete(char *filename){
 int ssufs_open(char *filename){
 	int inode_num, file_handle;
 
-	if((inode_num = open_namei(filename)) == -1){
-#if DEBUG
-	fprintf(stderr,"The file is not exist\n");
-#endif
+	if((inode_num = open_namei(filename)) == -1)
 		return -1;
-	}
 
 	file_handle =  ssufs_allocFileHandle();
 	if(file_handle != -1){
@@ -91,12 +71,8 @@ int ssufs_open(char *filename){
 		file_handle_array[file_handle].offset = 0;
 		return file_handle;
 	}
-	else{
-#if DEBUG
-	fprintf(stderr,"The file has been open to maximum\n");
-#endif
+	else
 		return -1;
-	}
 }
 
 void ssufs_close(int file_handle){
@@ -110,12 +86,8 @@ int ssufs_read(int file_handle, char *buf, int nbytes){
 	char buffer[BLOCKSIZE];
 
 	offset = file_handle_array[file_handle].offset;
-	if(ssufs_lseek(file_handle, nbytes) == -1){
-#if DEBUG
-	fprintf(stderr,"The size to read exceeds the file size\n");
-#endif
+	if(ssufs_lseek(file_handle, nbytes) == -1)
 		return -1;
-	}
 	ssufs_readInode(file_handle_array[file_handle].inode_number, &info);
 	start_block = offset / BLOCKSIZE;
 	start_idx = offset % BLOCKSIZE;
@@ -141,12 +113,8 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 	struct inode_t info;
 
 	offset = file_handle_array[file_handle].offset;
-	if(offset + nbytes > (BLOCKSIZE * MAX_FILE_SIZE)){
-#if DEBUG
-	fprintf(stderr,"The size to write exceeds the file size\n");
-#endif	
+	if(offset + nbytes > (BLOCKSIZE * MAX_FILE_SIZE))
 		return -1;
-	}
 	inode = file_handle_array[file_handle].inode_number;
 	ssufs_readInode(inode, &info);
 
@@ -162,9 +130,6 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 					ssufs_freeDataBlock(info.direct_blocks[start_block + i]);
 					info.direct_blocks[start_block + i] = -1;
 				}
-#if DEBUG
-	fprintf(stderr,"Not enough free block\n");
-#endif			
 				return -1;
 			}
 			else
