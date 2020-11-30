@@ -25,6 +25,9 @@ int main()
 	for(int i = 0; i < 100; i++)
 		test1[i] = 'B';
 	printf("Write Data: %d\n", ssufs_write(fd2, test1, 100));
+	printf("Seek: %d\n", ssufs_lseek(fd2, -100));
+	ssufs_read(fd2, test2, 100);
+	printf("Read Data : %s\n", test2);
     ssufs_dump();
     ssufs_delete("f1.txt");
     ssufs_dump();

@@ -121,6 +121,7 @@ int ssufs_read(int file_handle, char *buf, int nbytes){
 	start_idx = offset % BLOCKSIZE;
 	ssufs_readDataBlock(info.direct_blocks[start_block], buffer);
 
+
 	while(cnt < nbytes){
 		buf[cnt++] = buffer[start_idx++];
 		if(start_idx == BLOCKSIZE && cnt < nbytes){
@@ -151,7 +152,7 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 
 	start_block = offset / BLOCKSIZE;
 	start_idx = offset % BLOCKSIZE;
-	
+
 	diff = BLOCKSIZE - start_idx;
 	while(diff < nbytes){
 		create_num++;
@@ -184,8 +185,15 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 			if(start_idx == BLOCKSIZE){
 				ssufs_writeDataBlock(info.direct_blocks[start_block], buffer);
 				start_block++;
+				if(start_block < MAX_FILE_SIZE)
+					ssufs_readDataBlock(info.direct_blocks[start_block], buffer);
+				else
+					memset(buffer, 0, sizeof(buffer));
 				start_idx = 0;
 			}
+			else if(offset + 1 == info.file_size || cnt == nbytes)
+				ssufs_writeDataBlock(info.direct_blocks[start_block], buffer);
+			offset++;
 		}
 	}
 	//write
@@ -194,8 +202,14 @@ int ssufs_write(int file_handle, char *buf, int nbytes){
 		if(start_idx == BLOCKSIZE){
 			ssufs_writeDataBlock(info.direct_blocks[start_block], buffer);
 			start_block++;
+			if(start_block < MAX_FILE_SIZE)
+				ssufs_readDataBlock(info.direct_blocks[start_block], buffer);
+			else
+				memset(buffer, 0, sizeof(buffer));
 			start_idx = 0;
 		}
+		else if(cnt == nbytes)
+			ssufs_writeDataBlock(info.direct_blocks[start_block], buffer);
 		info.file_size++;
 	}
 	ssufs_writeInode(inode, &info);
